@@ -59,3 +59,7 @@ pause
 cd build
 
 ninja
+if errorlevel 1 exit /b
+
+cd ..
+call scripts\package_SYCL_dependencies.cmd
