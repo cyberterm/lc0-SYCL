@@ -1,7 +1,46 @@
 [![CircleCI](https://circleci.com/gh/LeelaChessZero/lc0.svg?style=shield)](https://circleci.com/gh/LeelaChessZero/lc0)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/3245b83otdee7oj7?svg=true)](https://ci.appveyor.com/project/leelachesszero/lc0)
 
-# Lc0
+# Lc0 (SYCL Windows Fork)
+
+> **Note**: This repository is a specialized fork of [LeelaChessZero/lc0](https://github.com/LeelaChessZero/lc0) focused on **Intel SYCL (Level Zero) acceleration on Windows**.
+> Upstream code and backends are intentionally kept intact to ensure clean, frictionless updates and synchronization with upstream releases.
+
+---
+
+## SYCL on Windows: Quick Start
+
+This fork provides pre-configured build and packaging scripts to produce a self-contained, portable Windows build of `lc0.exe` accelerated via Intel SYCL / Level Zero.
+
+### Prerequisites
+- **Windows 10/11 (64-bit)**
+- **Microsoft Visual Studio (2019 or 2022)** with the *"Desktop development with C++"* workload (provides `cl.exe`, `dumpbin.exe`, and MSVC build tools).
+- **[Intel® oneAPI Base Toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html)**:
+  - Intel® oneAPI DPC++/C++ Compiler (`icx`)
+  - Intel® oneAPI Math Kernel Library (oneMKL) and/or oneDNN
+- **Python 3** with Meson and Ninja:
+  ```shell
+  pip install --upgrade meson ninja
+  ```
+
+### Building & Packaging
+1. Open the **Intel oneAPI command prompt for VS 2022** (or run `call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"` from a developer command prompt).
+2. *(Optional)* Verify the dependency paths in `build-sycl.cmd` match your oneAPI installation directory.
+3. Run the build script from the repository root:
+   ```cmd
+   build-sycl.cmd
+   ```
+   This script will:
+   - Configure the build with Meson using `-Dsycl=l0`.
+   - Compile `lc0.exe` using `icx` and `ninja`.
+   - Automatically invoke `scripts\package_SYCL_dependencies.cmd` at the end, which scans binary dependencies via `dumpbin` and copies all required Intel SYCL runtime DLLs directly into `build\` for a portable, standalone release.
+
+### Running
+- The compiled engine and its runtime dependencies will be in the `build\` folder.
+- Download a neural network (e.g. from [lczero.org/play/networks/bestnets](https://lczero.org/play/networks/bestnets/)) into the `build\` directory.
+- Configure `build\lc0.exe` in your favorite chess GUI (Nibbler, Banksia, Fritz, Arena, etc.).
+
+---
 
 Lc0 is a UCI-compliant chess engine designed to play chess via neural network, specifically those of the [LeelaChessZero project](https://lczero.org).
 
@@ -156,9 +195,8 @@ CC=icx CXX=icpx AR=llvm-ar ./build.sh release -Dgtest=false -Dsycl=l0
 ```
 The first line is to initialize the build environment and is only needed once per session, while the build line may need modification as described above.
 
-On windows you will have to build using `ninja`, this is provided by Visual Studio if you install the CMake component. We provide a `build-sycl.cmd` script that should build just fine for an Intel GPU. This script has not yet been tested with and AMD GPU, some editing will be required.
+On Windows, you will build using `ninja`. We provide a `build-sycl.cmd` script configured for Intel GPUs (`-Dsycl=l0`). In this fork, `build-sycl.cmd` automatically invokes `scripts\package_SYCL_dependencies.cmd` after compilation to package all required oneAPI and Level Zero runtime DLLs directly into `build\`, producing a standalone, portable distribution that does not require initializing oneAPI environment variables every time you run the engine.
 
-You can also install the [oneAPI DPC++/C++ Compiler Runtime](https://www.intel.com/content/www/us/en/developer/articles/tool/compilers-redistributable-libraries-by-version.html) so you can run Lc0 without needing to initialize the build environment every time.
 
 ### BLAS
 
