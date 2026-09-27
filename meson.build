@@ -748,10 +748,14 @@ if get_option('build_backends')
       if get_option('sycl') == 'l0'
         message('Building SYCL for the L0 backend')
         add_project_arguments('-DMKL_ILP64', language : 'cpp')
-        deps += cc.find_library('mkl_sycl', required: true)
-        deps += cc.find_library('mkl_intel_ilp64', required: true)
-        deps += cc.find_library('mkl_sequential', required: true)
-        deps += cc.find_library('mkl_core', required: true)
+        mkl_sycl_lib = cc.find_library('mkl_sycl', dirs: mkl_libdirs, required: false)
+        if not mkl_sycl_lib.found()
+          mkl_sycl_lib = cc.find_library('mkl_sycl_dll', dirs: mkl_libdirs, required: true)
+        endif
+        deps += mkl_sycl_lib
+        deps += cc.find_library('mkl_intel_ilp64', dirs: mkl_libdirs, required: true)
+        deps += cc.find_library('mkl_sequential', dirs: mkl_libdirs, required: true)
+        deps += cc.find_library('mkl_core', dirs: mkl_libdirs, required: true)
         deps += cc.find_library('OpenCL', required: true)
       elif get_option('sycl') == 'amd'
         hip_libdirs = get_option('hip_libdirs')

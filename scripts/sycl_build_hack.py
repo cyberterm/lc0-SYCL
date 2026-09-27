@@ -12,20 +12,36 @@ dep_flag = False
 link_flag = False
 
 for line in lines:
-  # Replace xilink with icx as the linker.
-  if not link_flag:
-    link_flag = 'xilink.exe' in line
-  if link_flag:
+  # Check if entering a compiler or linker rule/target
+  if line.startswith('rule') or line.startswith('build'):
+    dep_flag = 'cpp_COMPILER' in line
+    link_flag = 'rule cpp_LINKER' in line
+
+  # In linker rules, replace xilink/link with icx and strip MSVC-specific flags
+  if link_flag or 'xilink.exe' in line:
     line = line.replace('xilink.exe', 'icx')
+    line = line.replace('"xilink.exe"', '"icx"')
+    line = line.replace('"link"', '"icx"')
+    line = line.replace('command = link ', 'command = icx ')
+    line = line.replace('command = "link.exe"', 'command = "icx"')
     line = line.replace('/MACHINE:x64', '')
     line = line.replace('/OUT:', '-o ')
     line = line.replace('/SUBSYSTEM:CONSOLE', '')
     line = line.replace('/OPT:REF', '')
     line = line.replace('/PDB:', '/Fd')
+    line = line.replace('"/LTCG"', '').replace('/LTCG', '')
+    line = line.replace('"/release"', '').replace('/release', '')
+
+  # Strip MSVC flags from target LINK_ARGS
+  if line.strip().startswith('LINK_ARGS ='):
+    line = line.replace('"/LTCG"', '').replace('/LTCG', '')
+    line = line.replace('"/release"', '').replace('/release', '')
+    line = line.replace('/OPT:REF', '')
+    line = line.replace('/SUBSYSTEM:CONSOLE', '')
+    line = line.replace('/MACHINE:x64', '')
+
   # Replace msvc compatible dependencies with gcc ones as icx output with /showincludes includes
   # temporary header files causing full project rebuilds.
-  if line.startswith('rule') or line.startswith('build'):
-    dep_flag = 'cpp_COMPILER' in line
   if dep_flag:
     line = line.replace('deps = msvc', 'deps = gcc\n depfile = $out.d')
     line = line.replace('/showIncludes', '/QMD')
