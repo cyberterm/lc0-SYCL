@@ -260,6 +260,13 @@ if get_option('build_backends')
   accelerate_lib = dependency('Accelerate', required: false)
 
   mkl_libdirs = get_option('mkl_libdirs')
+  if host_machine.system() == 'windows'
+    foreach p : ['C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib', 'C:/Program Files/Intel/oneAPI/mkl/latest/lib']
+      if fs.is_dir(p)
+        mkl_libdirs += p
+      endif
+    endforeach
+  endif
   mkl_lib = cc.find_library('mkl_rt', dirs: mkl_libdirs, required: false)
   if not mkl_lib.found()
     mkl_lib = cc.find_library('mklml', dirs: mkl_libdirs, required: false)
@@ -906,10 +913,14 @@ endif
 
 if not get_option('popcnt')
   add_project_arguments('-DNO_POPCNT', language : 'cpp')
+else
+  add_project_arguments(cc.get_supported_arguments(['-mpopcnt']), language : 'cpp')
 endif
 
 if not get_option('f16c')
   add_project_arguments('-DNO_F16C', language : 'cpp')
+else
+  add_project_arguments(cc.get_supported_arguments(['-mf16c']), language : 'cpp')
 endif
 
 if cc.has_type('_Float16')

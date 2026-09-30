@@ -3,6 +3,9 @@
 
 # Lc0
 
+> [!NOTE]
+> **Lc0-SYCL Fork:** This repository is a specialized fork of [LeelaChessZero](https://github.com/LeelaChessZero/lc0) providing production-ready **Intel SYCL / Level Zero** GPU acceleration for Intel Arc discrete graphics (Alchemist, Battlemage) and 11th+ Gen Intel Core processors with Xe integrated graphics. It includes automated standalone Windows release packaging, compatibility fixes for modern Intel oneAPI toolkits, and portable binary generation.
+
 Lc0 is a UCI-compliant chess engine designed to play chess via neural network, specifically those of the [LeelaChessZero project](https://lczero.org).
 
 ## Downloading source
@@ -153,9 +156,13 @@ CC=icx CXX=icpx AR=llvm-ar ./build.sh release -Dgtest=false -Dsycl=l0
 ```
 The first line is to initialize the build environment and is only needed once per session, while the build line may need modification as described above.
 
-On windows you will have to build using `ninja`, this is provided by Visual Studio if you install the CMake component. We provide a `build-sycl.cmd` script that should build just fine for an Intel GPU. This script has not yet been tested with and AMD GPU, some editing will be required.
+On Windows, you can build and package using the provided scripts:
+* **`build-sycl.cmd`**: For local developer builds. Automatically detects Visual Studio and oneAPI, compiles with `ninja`, and outputs `build/lc0.exe`.
+* **`package-sycl.cmd`**: Builds and packages a fully self-contained standalone release zip archive (`lc0-*-windows-gpu-intel-sycl.zip`), bundling all required Intel oneAPI Level Zero runtime DLLs so end-users can run Lc0 on Intel GPUs without needing to install Intel oneAPI.
 
-You can also install the [oneAPI DPC++/C++ Compiler Runtime](https://www.intel.com/content/www/us/en/developer/articles/tool/compilers-redistributable-libraries-by-version.html) so you can run Lc0 without needing to initialize the build environment every time.
+#### Supported Intel Hardware:
+* **Supported:** Intel Arc discrete GPUs (A-series, B-series) and 11th+ Gen Intel Core processors with Iris Xe / Arc graphics.
+* **Legacy Intel GPUs (Gen9 / UHD 630 and older):** Older Intel graphics do not have modern oneAPI Level Zero compute support. For these GPUs, please use Lc0's existing **OpenCL** (`--backend=opencl`) or **DirectML** (`--backend=onnx-dml`) backends.
 
 ### BLAS
 

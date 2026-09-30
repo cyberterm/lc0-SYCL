@@ -4,12 +4,14 @@ IF %NAME%==gpu-nvidia-cuda12 7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zi
 type COPYING |more /P > dist\COPYING
 7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip .\dist\COPYING
 7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip c:\cache\%NET%.pb.gz
-type "%MIMALLOC_PATH%"\readme.md |more /P > dist\mimalloc-readme.md
-type "%MIMALLOC_PATH%"\LICENSE |more /P > dist\mimalloc-LICENSE
-7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%MIMALLOC_PATH%"\out\msvc-x64\Release\mimalloc-override.dll
-7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%MIMALLOC_PATH%"\out\msvc-x64\Release\mimalloc-redirect.dll
-7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip .\dist\mimalloc-readme.md
-7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip .\dist\mimalloc-LICENSE
+IF NOT "%NAME%"=="gpu-intel-sycl" IF EXIST "%MIMALLOC_PATH%\out\msvc-x64\Release\mimalloc-override.dll" (
+  type "%MIMALLOC_PATH%"\readme.md |more /P > dist\mimalloc-readme.md
+  type "%MIMALLOC_PATH%"\LICENSE |more /P > dist\mimalloc-LICENSE
+  7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%MIMALLOC_PATH%"\out\msvc-x64\Release\mimalloc-override.dll
+  7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%MIMALLOC_PATH%"\out\msvc-x64\Release\mimalloc-redirect.dll
+  7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip .\dist\mimalloc-readme.md
+  7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip .\dist\mimalloc-LICENSE
+)
 IF %CUDA%==true copy lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%-nodll.zip
 IF %NAME%==cpu-openblas 7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip C:\cache\OpenBLAS\dist64\bin\libopenblas.dll
 IF %NAME%==cpu-dnnl 7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip C:\cache\%DNNL_NAME%\bin\dnnl.dll
@@ -58,6 +60,32 @@ IF %ONNX%==true (
   type dist\install-trt.cmd |more /P > dist\install.cmd
   7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%-trt.zip .\dist\README.txt
   7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%-trt.zip .\dist\install.cmd
+)
+IF NOT DEFINED ONEAPI_ROOT IF EXIST "C:\Program Files (x86)\Intel\oneAPI" SET "ONEAPI_ROOT=C:\Program Files (x86)\Intel\oneAPI"
+IF NOT DEFINED ONEAPI_ROOT IF EXIST "C:\Program Files\Intel\oneAPI" SET "ONEAPI_ROOT=C:\Program Files\Intel\oneAPI"
+IF "%NAME%"=="gpu-intel-sycl" (
+  IF EXIST THIRD-PARTY-LICENSES.txt (
+    copy THIRD-PARTY-LICENSES.txt dist\THIRD-PARTY-LICENSES.txt
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip .\dist\THIRD-PARTY-LICENSES.txt
+  )
+  IF DEFINED ONEAPI_ROOT (
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\compiler\latest\bin\sycl?.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\compiler\latest\bin\ur_loader.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\compiler\latest\bin\ur_win_proxy_loader.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\compiler\latest\bin\ur_adapter_level_zero.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\compiler\latest\bin\libmmd.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\compiler\latest\bin\svml_dispmd.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\compiler\latest\bin\umf.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\mkl\latest\bin\mkl_sycl_blas.*.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\mkl\latest\bin\mkl_core.*.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\mkl\latest\bin\mkl_tbb_thread.*.dll"
+    7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\tbb\latest\bin\tbb12.dll"
+    IF EXIST "%ONEAPI_ROOT%\tcm\latest\bin\libhwloc*.dll" (
+      7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%ONEAPI_ROOT%\tcm\latest\bin\libhwloc*.dll"
+    ) ELSE (
+      for /r "%ONEAPI_ROOT%" %%f in (libhwloc*.dll) do 7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip "%%f"
+    )
+  )
 )
 IF %OPENCL%==true type scripts\check_opencl.bat |more /P > dist\check_opencl.bat
 IF %OPENCL%==true 7z a lc0-%APPVEYOR_REPO_TAG_NAME%-windows-%NAME%.zip .\dist\check_opencl.bat

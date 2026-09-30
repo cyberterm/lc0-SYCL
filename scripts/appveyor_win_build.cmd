@@ -1,3 +1,8 @@
+IF "%NAME%"=="gpu-intel-sycl" (
+  ninja -C build
+  EXIT /b %ERRORLEVEL%
+)
+
 SET PGO=false
 IF %APPVEYOR_REPO_TAG%==true IF %DX%==false IF %ONNX%==false SET PGO=true
 IF %PGO%==false msbuild "C:\projects\lc0\build\lc0.sln" /m /p:WholeProgramOptimization=true /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
